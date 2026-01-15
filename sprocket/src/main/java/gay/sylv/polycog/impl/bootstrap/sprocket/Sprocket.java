@@ -27,7 +27,7 @@ public final class Sprocket {
 		try {
 			// Don't load Jar-in-Jar dependencies in development environments
 			// as they are already loaded.
-			if (!System.getProperty("polycog.debug.ide").equals("1")) {
+			if (!"1".equals(System.getProperty("polycog.debug.ide"))) {
 				Sprocket.loadJarsInJar();
 			}
 
