@@ -3,7 +3,7 @@
  * Copyright (c) 2026 Sylv
  *
  * All Rights Reserved
-*/
+ */
 
 package gay.sylv.polycog.impl.bootstrap.sprocket;
 
@@ -36,8 +36,10 @@ public final class SprocketClassLoader extends ClassLoader {
 
 	@Override
 	public Class<?> loadClass(String name) throws ClassNotFoundException {
-		// Ensure we load PolyCog's own classes in Sprocket
-		if (this.findLoadedClass(name) == null && name.startsWith("gay.sylv.polycog")) {
+		// Ensure we load Polycog's own classes in Sprocket
+		if (this.findLoadedClass(name) == null
+				&& (name.startsWith("gay.sylv.polycog.impl.client")
+				|| name.startsWith("gay.sylv.polycog.api.client"))) {
 			String path = name.replace(".", "/") + ".class";
 
 			try (InputStream inputStream =
@@ -109,7 +111,7 @@ public final class SprocketClassLoader extends ClassLoader {
 	/// @see #defineClass(String, byte[], int, int)
 	public void addClasses(Map<String, byte[]> classes) {
 		for (Map.Entry<String, byte[]> entry : classes.entrySet()) {
-			if (!this.classesToLoad.contains(entry.getKey())) {
+			if (!this.loadedClasses.containsKey(entry.getKey())) {
 				this.defineClasses(entry.getKey(), entry.getValue(), classes);
 			}
 		}

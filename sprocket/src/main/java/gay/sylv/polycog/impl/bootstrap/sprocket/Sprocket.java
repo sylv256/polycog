@@ -3,7 +3,7 @@
  * Copyright (c) 2026 Sylv
  *
  * All Rights Reserved
-*/
+ */
 
 package gay.sylv.polycog.impl.bootstrap.sprocket;
 
@@ -43,6 +43,7 @@ public final class Sprocket {
 		}
 
 		try {
+			Thread.currentThread().setName("Common Thread");
 			SprocketClassLoader.INSTANCE.loadClass(mainClass.getName())
 					.getDeclaredMethod("postMain")
 					.invoke(null);

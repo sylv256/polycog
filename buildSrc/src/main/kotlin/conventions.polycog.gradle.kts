@@ -20,6 +20,8 @@ val commonJar = "${rootProject.name}-common-${version}-slim.jar"
 dependencies {
 	implementation(project(":sprocket"))
 
+	"include"(Libraries.JETBRAINS_ANNOTATIONS)
+	implementation(Libraries.JETBRAINS_ANNOTATIONS)
 	"include"(Libraries.SLF4J_API)
 	implementation(Libraries.SLF4J_API)
 	"include"(Libraries.LOG4J_API)
@@ -31,6 +33,9 @@ dependencies {
 
 	"include"(Libraries.JSPECIFY)
 	implementation(Libraries.JSPECIFY)
+
+	"include"(Libraries.JOML)
+	implementation(Libraries.JOML)
 
 	testImplementation(platform("org.junit:junit-bom:5.10.0"))
 	testImplementation("org.junit.jupiter:junit-jupiter")

@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN" monitorInterval="30">
 	<Properties>
-		<Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1} - %m%n</Property>
+		<Property name="COLOR">FATAL=bright red, ERROR=red, WARN=bright yellow, INFO=blue, DEBUG=white, TRACE=bright white</Property>
+		<Property name="DISPLAY">(%t//%c{1})</Property>
+		<Property name="DATE_TIME">[%d{HH:mm:ss}]</Property>
+		<Property name="LOG_PATTERN">%style{${DATE_TIME}}{white} %style{${DISPLAY}}{cyan} %highlight{%level}{${COLOR}} %m%n</Property>
 	</Properties>
 
 	<Appenders>
 		<Console name="console" target="SYSTEM_OUT" follow="true">
-			<PatternLayout pattern="${LOG_PATTERN}"/>
+			<PatternLayout pattern="${LOG_PATTERN}" disableAnsi="false"/>
 		</Console>
 	</Appenders>
 

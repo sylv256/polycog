@@ -2,8 +2,8 @@
 	"schemaVersion": 1,
 	"id": "${id}-client",
 	"version": "${version}",
-	"name": "PolyCog Client",
-	"description": "PolyCog's client distribution.",
+	"name": "Polycog Client",
+	"description": "Polycog's client distribution.",
 	"environment": "client",
 	"depends": {
 		"${id}": "${version}"
