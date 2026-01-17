@@ -7,12 +7,16 @@
 
 package gay.sylv.polycog.impl.client.bootstrap;
 
-@SuppressWarnings("InstantiationOfUtilityClass")
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class GameClient {
+	public final Logger logger;
 	private static GameClient INSTANCE;
 
 	private GameClient() {
-		IO.println("Hello, Client!");
+		logger = LoggerFactory.getLogger("PolyCog/Client");
+		logger.info("Hello, Client!");
 	}
 
 	public static void initialize() {

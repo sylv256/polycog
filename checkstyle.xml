@@ -203,7 +203,7 @@
 			- largely unconstained trailing subpackages
 			-->
 			<property name="format"
-			value="^gay\.sylv\.polycog\.(api(?!\.common\.)(\.client|\.server|)(\.(?!client\.|server\.)[a-z]+([a-rt-z]|ss))+\.v[0-9]+|(impl|mixin|test)(?!\.common\.)(\.client|\.server|)(\.(?!client\.|server\.)[a-z]+([a-rt-z]|ss))+(\.v[0-9]+)?|api\.(event|util|registry))(|\.[a-z]+(\.[a-z0-9]+)*)$"/>
+			value="^gay\.sylv\.polycog\.(api(?!\.common\.)(\.client|\.server|)(\.(?!client\.|server\.)[a-z]+([a-rt-z]|ss))+|(impl|mixin|test)(?!\.common\.)(\.client|\.server|)(\.(?!client\.|server\.)[a-z]+([a-rt-z]|ss))+(\.v[0-9]+)?|api\.(event|util|registry))(|\.[a-z]+(\.[a-z0-9]+)*)$"/>
 		</module>
 
 		<!--<module name="InvalidJavadocPosition"/>-->

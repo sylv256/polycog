@@ -18,5 +18,6 @@ public final class MainServer {
 	@SuppressWarnings("unused") // used via reflection
 	public static void postMain() {
 		IO.println("Hello, Server!");
+		MainCommon.bootstrap();
 	}
 }

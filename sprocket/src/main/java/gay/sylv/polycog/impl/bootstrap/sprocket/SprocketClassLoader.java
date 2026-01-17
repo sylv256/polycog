@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.Stack;
 
 /// A [ClassLoader] that lets you do awful things like loading new classes with
@@ -27,6 +28,7 @@ public final class SprocketClassLoader extends ClassLoader {
 		);
 
 	private final Map<String, Class<?>> loadedClasses = new HashMap<>();
+	Set<String> classesToLoad = Set.of();
 
 	private SprocketClassLoader(String name, ClassLoader parent) {
 		super(name, parent);
@@ -65,13 +67,37 @@ public final class SprocketClassLoader extends ClassLoader {
 
 		while (!stack.empty()) {
 			Map.Entry<String, byte[]> entry = stack.pop();
+			final String versionedPattern = "^META-INF\\.versions\\.[0-9]+\\.";
+			String entryName = entry.getKey().replaceAll(
+					versionedPattern,
+					""
+			);
+
+			if (entry.getKey().endsWith("module-info")) {
+				continue;
+			}
 
 			try {
-				this.addClass(entry.getKey(), entry.getValue());
+				this.addClass(entryName, entry.getValue());
 			} catch (NoClassDefFoundError error) {
-				if (classes.containsKey(error.getMessage())) {
-					stack.push(Map.entry(entry.getKey(), entry.getValue()));
-					stack.push(Map.entry(error.getMessage(), classes.get(error.getMessage())));
+				String otherName = error.getMessage()
+						.replace("/", ".")
+						.replaceAll(
+							versionedPattern,
+							""
+						);
+
+				if (classes.containsKey(otherName)) {
+					stack.push(Map.entry(entryName, entry.getValue()));
+					stack.push(Map.entry(otherName, classes.get(otherName)));
+				} else {
+					IO.println(entryName + " attempted to load " + otherName + " but failed.");
+					IO.println("Loader's real name: " + entry.getKey());
+					IO.println("Other's real name: " + error.getMessage()
+							.replace("/", "."));
+					IO.println("Are there missing dependencies?");
+					IO.println();
+					throw error;
 				}
 			}
 		}
@@ -83,7 +109,9 @@ public final class SprocketClassLoader extends ClassLoader {
 	/// @see #defineClass(String, byte[], int, int)
 	public void addClasses(Map<String, byte[]> classes) {
 		for (Map.Entry<String, byte[]> entry : classes.entrySet()) {
-			this.defineClasses(entry.getKey(), entry.getValue(), classes);
+			if (!this.classesToLoad.contains(entry.getKey())) {
+				this.defineClasses(entry.getKey(), entry.getValue(), classes);
+			}
 		}
 	}
 

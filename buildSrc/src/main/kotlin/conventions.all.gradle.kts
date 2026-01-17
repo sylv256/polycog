@@ -4,10 +4,11 @@ plugins {
 	id("java")
 	checkstyle
 	id("com.diffplug.spotless")
+//	id("io.github.joselion.strict-null-check")
 }
 
 group = "gay.sylv"
-version = "0.1.0"
+version = Versions.GAME
 
 repositories {
 	mavenCentral()
@@ -17,6 +18,17 @@ configurations {
 	register("include") {
 		isCanBeResolved = false
 	}
+}
+
+tasks {
+	withType<JavaCompile> {
+//		dependsOn("generatePackageInfo")
+		dependsOn("spotlessApply")
+	}
+
+//	withType<GeneratePackageInfoTask> {
+////		dependsOn("spotlessApply")
+//	}
 }
 
 spotless {
@@ -35,3 +47,12 @@ checkstyle {
 	configFile = file("../checkstyle.xml")
 	toolVersion = "10.20.2"
 }
+
+// Bugged
+//strictNullCheck {
+//	packageInfo {
+//		imports.set(setOf("org.jspecify.annotations.NullMarked"))
+//		annotations.set(setOf("@NullMarked"))
+//		javadoc.set("Auto-generated package-info.")
+//	}
+//}
