@@ -1,0 +1,10 @@
+{
+	"schemaVersion": 1,
+	"id": "${id}",
+	"version": "${version}",
+	"name": "Polycog",
+	"environment": "*",
+	"breaks": {
+		"quilt_loader": "*"
+	}
+}

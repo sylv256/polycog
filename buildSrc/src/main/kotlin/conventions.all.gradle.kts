@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "gay.sylv"
-version = "0.1.0"
+version = Versions.GAME
 
 repositories {
 	mavenCentral()
@@ -17,6 +17,9 @@ configurations {
 	register("include") {
 		isCanBeResolved = false
 	}
+}
+
+tasks {
 }
 
 spotless {

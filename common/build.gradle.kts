@@ -19,6 +19,7 @@ tasks {
 	}
 
 	register<Jar>("slimJar") {
+		group = "build"
 		from(sourceSets["main"].output)
 		exclude {
 			it.path.contains("META-INF/jars") ||
@@ -31,8 +32,7 @@ tasks {
 		mainClass = bootstrap
 	}
 
-	register("runServer") {
+	getByName("run") {
 		group = "polycog"
-		dependsOn("run")
 	}
 }

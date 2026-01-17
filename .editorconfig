@@ -10,5 +10,9 @@ charset = utf-8
 max_line_length = 80
 trim_trailing_whitespace = true
 
+[*.java]
+ij_java_continuation_indent_size = 8
+ij_continuation_indent_size = 8
+
 [*.json]
 tab_width = 2

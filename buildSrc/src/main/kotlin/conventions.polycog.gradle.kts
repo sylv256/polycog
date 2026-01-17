@@ -15,15 +15,27 @@ fun filesTxt(): File {
 	return file(projectDir.absolutePath + "/build/resources/main/META-INF/jars/files.txt")
 }
 
+val commonJar = "${rootProject.name}-common-${version}-slim.jar"
+
 dependencies {
 	implementation(project(":sprocket"))
 
-	"include"("org.slf4j:slf4j-api:2.0.17")
-	"include"("org.apache.logging.log4j:log4j-slf4j-impl:2.25.3")
-	"include"("org.apache.logging.log4j:log4j-core:2.25.3")
-	implementation("org.slf4j:slf4j-api:2.0.17")
-	implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.25.3")
-	implementation("org.apache.logging.log4j:log4j-core:2.25.3")
+	"include"(Libraries.JETBRAINS_ANNOTATIONS)
+	implementation(Libraries.JETBRAINS_ANNOTATIONS)
+	"include"(Libraries.SLF4J_API)
+	implementation(Libraries.SLF4J_API)
+	"include"(Libraries.LOG4J_API)
+	implementation(Libraries.LOG4J_API)
+	"include"(Libraries.LOG4J_CORE)
+	implementation(Libraries.LOG4J_CORE)
+	"include"(Libraries.LOG4J_SLF4J_IMPL)
+	implementation(Libraries.LOG4J_SLF4J_IMPL)
+
+	"include"(Libraries.JSPECIFY)
+	implementation(Libraries.JSPECIFY)
+
+	"include"(Libraries.JOML)
+	implementation(Libraries.JOML)
 
 	testImplementation(platform("org.junit:junit-bom:5.10.0"))
 	testImplementation("org.junit.jupiter:junit-jupiter")
@@ -62,6 +74,18 @@ tasks {
 				"--add-reads",
 				"gay.sylv.polycog=ALL-UNNAMED"
 			))
+		}
+	}
+
+	withType<ProcessResources> {
+		val expansions = mapOf(
+			"id" to Libraries.GAME_ID,
+			"version" to Versions.GAME,
+			"common_jar" to commonJar
+		)
+
+		filesMatching("fabric.mod.json") {
+			expand(expansions)
 		}
 	}
 

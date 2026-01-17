@@ -3,7 +3,7 @@
  * Copyright (c) 2026 Sylv
  *
  * All Rights Reserved
-*/
+ */
 
 package gay.sylv.polycog.impl.bootstrap.sprocket;
 
@@ -30,32 +30,38 @@ public final class Sprocket {
 			if (!"1".equals(System.getProperty("polycog.debug.ide"))) {
 				Sprocket.loadJarsInJar();
 			}
-
-			SprocketClassLoader.INSTANCE.loadClass(mainClass.getName())
-					.getDeclaredMethod("postMain")
-					.invoke(null);
-		} catch (NoClassDefFoundError | RuntimeException
-				| ClassNotFoundException | NoSuchMethodException
-				| IllegalAccessException | InvocationTargetException e) {
+		} catch (NoClassDefFoundError | RuntimeException e) {
 			IO.println("The game's dependencies are not loaded correctly; the game JAR is either corrupted or malformed!");
 			IO.println("This should never happen, but if you see this, please report this bug on our bug tracker.");
 			IO.println("https://github.com/sylv256/polycog/issues\n");
 
 			if (e instanceof RuntimeException runtimeException) {
 				throw runtimeException;
-			} else if (e instanceof Error error) {
-				throw error;
 			} else {
 				throw new RuntimeException(e);
 			}
+		}
+
+		try {
+			Thread.currentThread().setName("Common Thread");
+			SprocketClassLoader.INSTANCE.loadClass(mainClass.getName())
+					.getDeclaredMethod("postMain")
+					.invoke(null);
+		} catch (IllegalAccessException | InvocationTargetException
+				| NoSuchMethodException | ClassNotFoundException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
 	/// Loads all nested JARs into the [SprocketClassLoader].
 	public static void loadJarsInJar() {
+		final Map<String, byte[]> classBytes = new HashMap<>();
+
 		for (String jar : findNestedJars()) {
-			loadNestedJar("META-INF/jars/" + jar);
+			scanNestedJar("META-INF/jars/" + jar, classBytes);
 		}
+
+		SprocketClassLoader.INSTANCE.addClasses(classBytes);
 	}
 
 	/// Finds all JARs nested in this JAR.
@@ -84,16 +90,18 @@ public final class Sprocket {
 		return List.copyOf(nestedJars);
 	}
 
-	/// Ugly [ClassLoader] hack to load nested JARs like the Common JAR into the
-	/// [SprocketClassLoader].
-	public static void loadNestedJar(String nestedJar) {
+	/// Scans a nested JAR for classes and adds them to
+	/// [SprocketClassLoader#classesToLoad].
+	public static void scanNestedJar(
+			String nestedJar,
+			Map<String, byte[]> classBytes
+	) {
 		// Get JAR File
 		ClassLoader classLoader = Sprocket.class.getClassLoader();
 
 		try (JarInputStream jis = new JarInputStream(
 				Objects.requireNonNull(classLoader.getResourceAsStream(nestedJar)))) {
 			// Extract Classes
-			Map<String, byte[]> classBytes = new HashMap<>();
 			JarEntry jarEntry = jis.getNextJarEntry();
 
 			while (jarEntry != null) {
@@ -110,13 +118,11 @@ public final class Sprocket {
 
 				jarEntry = jis.getNextJarEntry();
 			}
-
-			// Load Classes
-			SprocketClassLoader sprocketLoader = SprocketClassLoader.INSTANCE;
-			sprocketLoader.addClasses(classBytes);
 		} catch (IOException e) {
 			IO.println("Error reading Nested Jar " + nestedJar);
 			throw new RuntimeException(e);
 		}
+
+		SprocketClassLoader.INSTANCE.classesToLoad = classBytes.keySet();
 	}
 }

@@ -1,0 +1,16 @@
+{
+	"schemaVersion": 1,
+	"id": "${id}-client",
+	"version": "${version}",
+	"name": "Polycog Client",
+	"description": "Polycog's client distribution.",
+	"environment": "client",
+	"depends": {
+		"${id}": "${version}"
+	},
+	"jars": [
+		{
+			"file": "META-INF/jars/${common_jar}"
+		}
+	]
+}
