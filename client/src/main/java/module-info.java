@@ -7,6 +7,7 @@ module gay.sylv.polycog.client {
 	requires org.jspecify;
 	requires org.lwjgl.glfw;
 	requires org.lwjgl.vulkan;
+	requires org.jetbrains.annotations;
 
 	exports gay.sylv.polycog.api.client.wheel.device;
 	exports gay.sylv.polycog.api.client.wheel.memory;

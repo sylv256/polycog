@@ -1,6 +1,7 @@
 package gay.sylv.polycog.impl.share;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
@@ -10,14 +11,26 @@ import org.jspecify.annotations.Nullable;
 /// Mom: We have LazyConstant at home.
 ///
 /// The LazyConstant at home:
-public final class LazyConstant<T> {
+public sealed class LazyConstant<T> permits LazyConstantList, LazyConstantMap {
 	private @Nullable T value;
 
-	private LazyConstant() {
+	protected LazyConstant() {
 	}
 
 	public static <T> LazyConstant<T> of() {
 		return new LazyConstant<>();
+	}
+
+	public static <T> LazyConstantList<T> ofList() {
+		return new LazyConstantList<>();
+	}
+
+	public static <K, V> LazyConstantMap<K, V> ofMap() {
+		return new LazyConstantMap<>();
+	}
+
+	public boolean has() {
+		return this.value != null;
 	}
 
 	public T get() {
@@ -41,5 +54,11 @@ public final class LazyConstant<T> {
 		}
 
 		return this.value;
+	}
+
+	public void run(Consumer<T> action) {
+		if (this.has()) {
+			action.accept(this.get());
+		}
 	}
 }

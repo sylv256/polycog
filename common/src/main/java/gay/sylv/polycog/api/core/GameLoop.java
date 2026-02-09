@@ -29,11 +29,11 @@ public interface GameLoop extends Runnable, Closeable {
 
 		lo: while (true) {
 			switch (this.runLoop()) {
-			case CONTINUE -> {
-			}
-			case BREAK -> {
-				break lo;
-			}
+				case CONTINUE -> {
+				}
+				case BREAK -> {
+					break lo;
+				}
 			}
 		}
 

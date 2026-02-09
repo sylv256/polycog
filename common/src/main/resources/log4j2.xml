@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN" monitorInterval="30">
 	<Properties>
-		<Property name="COLOR">FATAL=bright red, ERROR=red, WARN=bright yellow, INFO=blue, DEBUG=white, TRACE=bright white</Property>
+		<Property name="COLOR">FATAL=bright red, ERROR=red, WARN=bright yellow, INFO=blue, DEBUG=white, TRACE=magenta</Property>
 		<Property name="DISPLAY">(%t//%c{1})</Property>
 		<Property name="DATE_TIME">[%d{HH:mm:ss}]</Property>
 		<Property name="LOG_PATTERN">%style{${DATE_TIME}}{white} %style{${DISPLAY}}{cyan} %highlight{%level}{${COLOR}} %m%n</Property>

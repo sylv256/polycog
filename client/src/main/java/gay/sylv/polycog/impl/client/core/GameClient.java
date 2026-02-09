@@ -103,6 +103,10 @@ public final class GameClient implements GameLoop {
 		GameClient.getRenderThread().start();
 	}
 
+	public GameRenderer getRenderer() {
+		return this.renderer;
+	}
+
 	public void parseInput(long window, int key, int scancode, int action, int mods) {
 	}
 }
