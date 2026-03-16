@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.dependencies
-
 plugins {
 	id("conventions.all")
 	idea
@@ -15,6 +13,10 @@ fun filesTxt(): File {
 	return file(projectDir.absolutePath + "/build/resources/main/META-INF/jars/files.txt")
 }
 
+fun fmj(): File {
+	return file(projectDir.absolutePath + "/build/resources/main/fabric.mod.json")
+}
+
 val commonJar = "${rootProject.name}-common-${version}-slim.jar"
 
 dependencies {
@@ -26,6 +28,16 @@ dependencies {
 	implementation(Libraries.SLF4J_API)
 	"include"(Libraries.LOG4J_API)
 	implementation(Libraries.LOG4J_API)
+	"include"(Libraries.JACKSON_CORE)
+	"include"(Libraries.JACKSON_DATAFORMAT_XML)
+	"include"(Libraries.JACKSON_DATAFORMAT_YAML)
+	"include"(Libraries.OSGI_FRAMEWORK)
+	"include"(Libraries.OSGI_RESOURCE)
+	"include"(Libraries.OSGI_DTO)
+	"include"(Libraries.DISRUPTOR_FRAMEWORK)
+	"include"(Libraries.JAVAX_MAIL)
+	"include"(Libraries.JAVAX_ACTIVATION)
+	"include"(Libraries.JCTOOLS_CORE)
 	"include"(Libraries.LOG4J_CORE)
 	implementation(Libraries.LOG4J_CORE)
 	"include"(Libraries.LOG4J_SLF4J_IMPL)

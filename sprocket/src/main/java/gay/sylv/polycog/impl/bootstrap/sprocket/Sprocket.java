@@ -24,6 +24,9 @@ public final class Sprocket {
 	/// Initializes [SprocketClassLoader] and loads all Jar-in-Jar dependencies
 	/// via [#loadJarsInJar()].
 	public static void bootstrap(Class<?> mainClass) {
+		Thread.currentThread().setName("Common Thread");
+		Thread.currentThread().setContextClassLoader(SprocketClassLoader.INSTANCE);
+
 		try {
 			// Don't load Jar-in-Jar dependencies in development environments
 			// as they are already loaded.
@@ -43,7 +46,6 @@ public final class Sprocket {
 		}
 
 		try {
-			Thread.currentThread().setName("Common Thread");
 			SprocketClassLoader.INSTANCE.loadClass(mainClass.getName())
 					.getDeclaredMethod("postMain")
 					.invoke(null);
@@ -56,12 +58,14 @@ public final class Sprocket {
 	/// Loads all nested JARs into the [SprocketClassLoader].
 	public static void loadJarsInJar() {
 		final Map<String, byte[]> classBytes = new HashMap<>();
+		final Map<String, byte[]> resourceBytes = new HashMap<>();
 
 		for (String jar : findNestedJars()) {
-			scanNestedJar("META-INF/jars/" + jar, classBytes);
+			scanNestedJar("META-INF/jars/" + jar, classBytes, resourceBytes);
 		}
 
 		SprocketClassLoader.INSTANCE.addClasses(classBytes);
+		SprocketClassLoader.INSTANCE.addResources(resourceBytes);
 	}
 
 	/// Finds all JARs nested in this JAR.
@@ -94,7 +98,8 @@ public final class Sprocket {
 	/// [SprocketClassLoader#classesToLoad].
 	public static void scanNestedJar(
 			String nestedJar,
-			Map<String, byte[]> classBytes
+			Map<String, byte[]> classBytes,
+			Map<String, byte[]> resourceBytes
 	) {
 		// Get JAR File
 		ClassLoader classLoader = Sprocket.class.getClassLoader();
@@ -110,8 +115,16 @@ public final class Sprocket {
 				if (name.endsWith(".class") && !name.equals("module-info.class")) {
 					classBytes.put(
 							name
-								.replace(".class", "")
-								.replace("/", "."),
+									.replace(".class", "")
+									.replace("/", ".")
+									.replaceAll("META-INF\\.versions\\.[0-9]+\\.", ""),
+							jis.readAllBytes()
+					);
+				}
+
+				if (!jarEntry.isDirectory()) {
+					resourceBytes.put(
+							name,
 							jis.readAllBytes()
 					);
 				}
@@ -122,7 +135,5 @@ public final class Sprocket {
 			IO.println("Error reading Nested Jar " + nestedJar);
 			throw new RuntimeException(e);
 		}
-
-		SprocketClassLoader.INSTANCE.classesToLoad = classBytes.keySet();
 	}
 }

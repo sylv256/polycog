@@ -11,6 +11,8 @@ fun filesTxt(): File {
 	return file(projectDir.absolutePath + "/build/resources/main/META-INF/jars/files.txt")
 }
 
+val lwjglSupportedNatives = listOf("natives-linux-arm64", "natives-linux-riscv64", "natives-linux", "natives-windows")
+
 val lwjglNatives = Pair(
 	System.getProperty("os.name")!!,
 	System.getProperty("os.arch")!!
@@ -42,27 +44,35 @@ sourceSets {
 	}
 }
 
+fun DependencyHandlerScope.includeNatives(lib: String) {
+	this.add("include", lib)
+
+	lwjglSupportedNatives.forEach {
+		if (!(lib.contains("vulkan") && !it.contains("macos"))) {
+			this.add("include", "$lib:$it")
+		}
+	}
+}
+
+fun DependencyHandlerScope.implementationIncludeNatives(lib: String) {
+	this.includeNatives(lib)
+
+	this.add("implementation", lib)
+
+	if (!(lib.contains("vulkan") && !lwjglNatives.contains("macos"))) {
+		this.add("implementation", lib + lwjglNatives)
+	}
+}
+
 dependencies {
 	implementation(project(":common"))
 
-	"include"(Libraries.LWJGL)
-	"include"(Libraries.LWJGL + lwjglNatives)
-	implementation(Libraries.LWJGL)
-	implementation(Libraries.LWJGL + lwjglNatives)
-	"include"(Libraries.LWJGL_GLFW)
-	"include"(Libraries.LWJGL_GLFW + lwjglNatives)
-	implementation(Libraries.LWJGL_GLFW)
-	implementation(Libraries.LWJGL_GLFW + lwjglNatives)
-	"include"(Libraries.LWJGL_STB)
-	"include"(Libraries.LWJGL_STB + lwjglNatives)
-	implementation(Libraries.LWJGL_STB)
-	implementation(Libraries.LWJGL_STB + lwjglNatives)
-	"include"(Libraries.LWJGL_VULKAN)
-	implementation(Libraries.LWJGL_VULKAN)
-	"include"(Libraries.LWJGL_VMA)
-	"include"(Libraries.LWJGL_VMA + lwjglNatives)
-	implementation(Libraries.LWJGL_VMA)
-	implementation(Libraries.LWJGL_VMA + lwjglNatives)
+	implementationIncludeNatives(Libraries.LWJGL)
+	implementationIncludeNatives(Libraries.LWJGL_JEMALLOC)
+	implementationIncludeNatives(Libraries.LWJGL_GLFW)
+	implementationIncludeNatives(Libraries.LWJGL_STB)
+	implementationIncludeNatives(Libraries.LWJGL_VULKAN)
+	implementationIncludeNatives(Libraries.LWJGL_VMA)
 }
 
 tasks {

@@ -35,7 +35,6 @@ import org.lwjgl.vulkan.VkInstanceCreateInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import gay.sylv.polycog.api.client.wheel.device.GpuDevice;
 import gay.sylv.polycog.api.client.wheel.device.GpuQueue;
 import gay.sylv.polycog.api.client.wheel.device.PhysicalGpuDevice;
 import gay.sylv.polycog.api.core.GameLoop;

@@ -8,6 +8,7 @@
 package gay.sylv.polycog.api.core;
 
 import gay.sylv.polycog.impl.core.IdentifierImpl;
+import gay.sylv.polycog.impl.share.Constants;
 
 public interface Identifier {
 	static Identifier of(String namespace, String path) {
@@ -15,7 +16,7 @@ public interface Identifier {
 	}
 
 	static Identifier ofDefault(String path) {
-		return of("polycog", path);
+		return of(Constants.ID, path);
 	}
 
 	String namespace();

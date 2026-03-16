@@ -33,7 +33,7 @@ public final class GameClient implements GameLoop {
 
 	private GameClient() {
 		this.logger = LoggerFactory.getLogger("Polycog/Client");
-		Configuration.MEMORY_ALLOCATOR.set("system"); // FIXME: add jemalloc bindings
+		Configuration.MEMORY_ALLOCATOR.set("jemalloc");
 		this.renderer = new GameRenderer();
 	}
 

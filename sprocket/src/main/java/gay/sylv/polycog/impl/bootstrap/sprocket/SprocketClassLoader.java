@@ -7,12 +7,21 @@
 
 package gay.sylv.polycog.impl.bootstrap.sprocket;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.Stack;
 
 /// A [ClassLoader] that lets you do awful things like loading new classes with
@@ -28,7 +37,8 @@ public final class SprocketClassLoader extends ClassLoader {
 		);
 
 	private final Map<String, Class<?>> loadedClasses = new HashMap<>();
-	Set<String> classesToLoad = Set.of();
+	final Map<String, byte[]> classesToLoad = new HashMap<>();
+	final Map<String, byte[]> resources = new HashMap<>();
 
 	private SprocketClassLoader(String name, ClassLoader parent) {
 		super(name, parent);
@@ -36,10 +46,16 @@ public final class SprocketClassLoader extends ClassLoader {
 
 	@Override
 	public Class<?> loadClass(String name) throws ClassNotFoundException {
-		// Ensure we load Polycog's own classes in Sprocket
-		if (this.findLoadedClass(name) == null
-				&& (name.startsWith("gay.sylv.polycog.impl.client")
-				|| name.startsWith("gay.sylv.polycog.api.client"))) {
+		if (this.loadedClasses.containsKey(name)) {
+			return this.loadedClasses.get(name);
+		} else if (this.classesToLoad.containsKey(name)) {
+			byte[] b = this.classesToLoad.get(name);
+			this.loadedClasses.put(name, this.defineClass(name, b, 0, b.length));
+			this.classesToLoad.remove(name);
+			return this.loadedClasses.get(name);
+		} else if (name.startsWith("gay.sylv.polycog.impl")
+				|| name.startsWith("gay.sylv.polycog.api")) {
+			// Ensure we load Polycog's own classes in Sprocket
 			String path = name.replace(".", "/") + ".class";
 
 			try (InputStream inputStream =
@@ -52,6 +68,52 @@ public final class SprocketClassLoader extends ClassLoader {
 		}
 
 		return super.loadClass(name);
+	}
+
+	@Override
+	protected Enumeration<URL> findResources(String name) throws IOException {
+		if (this.resources.containsKey(name)) {
+			return Collections.enumeration(List.of(this.findResource(name)));
+		}
+
+		return super.findResources(name);
+	}
+
+	@Override
+	protected URL findResource(String name) {
+		boolean isResource = this.resources.containsKey(name);
+
+		if (!isResource) {
+			return super.findResource(name);
+		}
+
+		try {
+			final String finalName = name;
+
+			if (!name.startsWith("/")) {
+				name = "//" + name;
+			}
+
+			return URL.of(
+					new URI("sprocket", null, name, null), new URLStreamHandler() {
+						@Override
+						protected URLConnection openConnection(URL u) {
+							return new URLConnection(u) {
+								@Override
+								public void connect() {
+								}
+
+								@Override
+								public InputStream getInputStream() {
+									return new ByteArrayInputStream(resources.get(finalName));
+								}
+							};
+						}
+					}
+			);
+		} catch (MalformedURLException | URISyntaxException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private Class<?> addClass(String name, byte[] bytes) {
@@ -69,9 +131,9 @@ public final class SprocketClassLoader extends ClassLoader {
 
 		while (!stack.empty()) {
 			Map.Entry<String, byte[]> entry = stack.pop();
-			final String versionedPattern = "^META-INF\\.versions\\.[0-9]+\\.";
+			final String versioned = "^META-INF\\.versions\\.[0-9]+\\.";
 			String entryName = entry.getKey().replaceAll(
-					versionedPattern,
+					versioned,
 					""
 			);
 
@@ -80,12 +142,12 @@ public final class SprocketClassLoader extends ClassLoader {
 			}
 
 			try {
-				this.addClass(entryName, entry.getValue());
-			} catch (NoClassDefFoundError error) {
-				String otherName = error.getMessage()
+				this.classesToLoad.put(entryName, classes.get(entry.getKey()));
+			} catch (NullPointerException error) {
+				String otherName = entry.getKey()
 						.replace("/", ".")
 						.replaceAll(
-							versionedPattern,
+							versioned,
 							""
 						);
 
@@ -95,7 +157,8 @@ public final class SprocketClassLoader extends ClassLoader {
 				} else {
 					IO.println(entryName + " attempted to load " + otherName + " but failed.");
 					IO.println("Loader's real name: " + entry.getKey());
-					IO.println("Other's real name: " + error.getMessage()
+					IO.println("Other's real name: " + error.getMessage().replaceAll("\\s*\\(wrong name: ", "")
+							.replace(")", "")
 							.replace("/", "."));
 					IO.println("Are there missing dependencies?");
 					IO.println();
@@ -103,6 +166,10 @@ public final class SprocketClassLoader extends ClassLoader {
 				}
 			}
 		}
+	}
+
+	public void addResources(Map<String, byte[]> files) {
+		this.resources.putAll(files);
 	}
 
 	/// Adds a [Map] of interdependent classes to the [SprocketClassLoader].

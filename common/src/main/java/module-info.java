@@ -8,5 +8,6 @@ module gay.sylv.polycog {
 	exports gay.sylv.polycog.api.core;
 
 	exports gay.sylv.polycog.impl.bootstrap to gay.sylv.polycog.client;
+	exports gay.sylv.polycog.impl.core to gay.sylv.polycog.client;
 	exports gay.sylv.polycog.impl.share to gay.sylv.polycog.client;
 }

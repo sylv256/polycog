@@ -15,6 +15,7 @@ public final class Constants {
 
 	// Flags
 	public static final boolean IS_RUNNING_IDE = flag("debug.ide");
+	public static final boolean IS_DEBUG = devFlag("debug");
 	public static final boolean WHEEL_GFX_VALIDATION = debugFlag("wheel.validation");
 
 	private static boolean flag(String name) {

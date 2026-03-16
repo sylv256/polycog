@@ -15,8 +15,10 @@ import gay.sylv.polycog.impl.share.Constants;
 
 public final class MainCommon {
 	public static void bootstrap() {
-		if (Constants.IS_RUNNING_IDE) {
+		if (Constants.IS_DEBUG) {
 			Configurator.setRootLevel(Level.TRACE);
+		} else {
+			Configurator.setRootLevel(Level.INFO);
 		}
 
 		GameCommon.initialize();
