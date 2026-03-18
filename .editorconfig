@@ -13,6 +13,7 @@ trim_trailing_whitespace = true
 [*.java]
 ij_java_continuation_indent_size = 8
 ij_continuation_indent_size = 8
+ij_java_indent_case_from_switch = true
 
 [*.json]
 tab_width = 2

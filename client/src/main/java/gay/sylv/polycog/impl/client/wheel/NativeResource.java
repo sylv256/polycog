@@ -13,21 +13,27 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.CustomBuffer;
 import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.system.Pointer;
 import org.lwjgl.system.Struct;
 import org.lwjgl.system.StructBuffer;
 
-public abstract class NativeResource implements AutoCloseable {
+public abstract class NativeResource<H extends Pointer> implements AutoCloseable {
 	private final Collection<Buffer> buffers = new ArrayList<>();
 	private final Collection<org.lwjgl.system.NativeResource> resources = new ArrayList<>();
 	private final Collection<CustomBuffer<?>> customBuffers = new ArrayList<>();
 	private final Collection<Struct<?>> structs = new ArrayList<>();
-	private final Collection<NativeResource> children = new HashSet<>();
+	private final Collection<NativeResource<?>> children = new HashSet<>();
+	@Nullable NativeResource<?> parent;
+	protected @Nullable H vkHandle;
 
 	protected NativeResource() {
 	}
@@ -71,14 +77,32 @@ public abstract class NativeResource implements AutoCloseable {
 		return buffer;
 	}
 
-	protected <T extends NativeResource> T addChild(T child) {
+	protected <T extends NativeResource<?>> T addChild(T child) {
+		child.parent = this;
 		this.children.add(child);
 		return child;
 	}
 
-	protected <T extends NativeResource, C extends Collection<T>> C addChildren(C children) {
-		this.children.addAll(children);
+	protected <T extends Struct<T>> T move(@AutomaticallyMoved T struct) {
+		this.structs.add(struct);
+		return struct;
+	}
+
+	protected void move(@AutomaticallyMoved Struct<?>... structs) {
+		this.structs.addAll(List.of(structs));
+	}
+
+	@SafeVarargs
+	protected final <T extends NativeResource<?>> T[] addChildren(T... children) {
+		for (T child : children) {
+			this.addChild(child);
+		}
+
 		return children;
+	}
+
+	public H getVkHandle() {
+		return Objects.requireNonNull(this.vkHandle, "This resource does not have a Vulkan handle");
 	}
 
 	/// Called before automatic resources are freed.

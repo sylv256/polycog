@@ -9,14 +9,15 @@ package gay.sylv.polycog.api.client.wheel.device;
 
 import java.util.Collection;
 
+import gay.sylv.polycog.impl.client.wheel.RenderObject;
 import gay.sylv.polycog.impl.client.wheel.vulkan.device.VkGpuDevice;
 
 /// A logical GPU device. Typically, this has a specific function in a
 /// [PhysicalGpuDevice].
-public sealed interface GpuDevice extends AutoCloseable permits VkGpuDevice {
+public sealed interface GpuDevice extends AutoCloseable, RenderObject<GpuDevice> permits VkGpuDevice {
 	/// @return the currently selected [GpuDevice].
 	static GpuDevice get() {
-		return PhysicalGpuDevice.get().getLogicalDevice(null);
+		return PhysicalGpuDevice.get().getLogicalDevice(GpuFeatures.CORE);
 	}
 
 	Collection<GpuQueue> getQueues();

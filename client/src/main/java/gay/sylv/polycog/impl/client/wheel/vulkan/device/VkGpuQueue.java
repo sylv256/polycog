@@ -11,9 +11,9 @@ import org.lwjgl.vulkan.VkQueue;
 
 import gay.sylv.polycog.api.client.wheel.device.GpuQueue;
 import gay.sylv.polycog.api.client.wheel.device.GpuQueueType;
+import gay.sylv.polycog.impl.client.wheel.NativeResource;
 
-public final class VkGpuQueue implements GpuQueue {
-	private final VkQueue vkHandle;
+public final class VkGpuQueue extends NativeResource<VkQueue> implements GpuQueue {
 	private final GpuQueueType type;
 	private final VkGpuQueueFamily family;
 
@@ -29,10 +29,6 @@ public final class VkGpuQueue implements GpuQueue {
 	@Override
 	public GpuQueueType type() {
 		return this.type;
-	}
-
-	public VkQueue getVkHandle() {
-		return vkHandle;
 	}
 
 	public VkGpuQueueFamily getFamily() {

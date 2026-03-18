@@ -35,10 +35,13 @@ import org.lwjgl.vulkan.VkInstanceCreateInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import gay.sylv.polycog.api.client.wheel.device.GpuDevice;
+import gay.sylv.polycog.api.client.wheel.device.GpuFeatures;
 import gay.sylv.polycog.api.client.wheel.device.GpuQueue;
 import gay.sylv.polycog.api.client.wheel.device.PhysicalGpuDevice;
 import gay.sylv.polycog.api.core.GameLoop;
 import gay.sylv.polycog.impl.client.core.GameClient;
+import gay.sylv.polycog.impl.client.wheel.vulkan.core.DeviceUnsupportedException;
 import gay.sylv.polycog.impl.client.wheel.vulkan.core.VkResult;
 import gay.sylv.polycog.impl.client.wheel.vulkan.core.VulkanException;
 import gay.sylv.polycog.impl.client.wheel.vulkan.device.VkPhysicalGpuDevice;
@@ -62,6 +65,7 @@ public final class GameRenderer implements GameLoop {
 	@Override
 	public Control runLoop() {
 		if (this.stop.get().isBefore(Instant.now())) {
+			GpuDevice.get();
 			return Control.BREAK;
 		}
 
@@ -75,10 +79,7 @@ public final class GameRenderer implements GameLoop {
 		this.stop.set(Instant.now().plusSeconds(5));
 
 		if (!glfwVulkanSupported()) {
-			throw new IllegalStateException("""
-				Vulkan is not supported on your platform.
-				This means your computer is either too old or not officially supported.
-				Do not open support tickets or create issues; they will be closed.""");
+			throw new DeviceUnsupportedException();
 		}
 
 		try (MemoryStack stack = stackPush()) {
@@ -137,7 +138,7 @@ public final class GameRenderer implements GameLoop {
 		this.getPhysicalDevices().forEach(device -> {
 			LOGGER.debug("Found PhysicalDevice {}", device.name());
 
-			for (GpuQueue queue : device.getLogicalDevice(null).getQueues()) {
+			for (GpuQueue queue : device.getLogicalDevice(GpuFeatures.CORE).getQueues()) {
 				LOGGER.debug("Found GpuQueue of type {} for PhysicalDevice {}", queue.type(), device.name());
 			}
 		});
@@ -145,7 +146,17 @@ public final class GameRenderer implements GameLoop {
 
 	public PhysicalGpuDevice getPhysicalGpuDevice() {
 		// TODO: configurable selection (automatically chosen first time)
-		return this.physicalGpuDevice.getOrSet(() -> this.getPhysicalDevices().getFirst());
+		return this.physicalGpuDevice.getOrSet(() -> {
+			for (PhysicalGpuDevice apiPhysicalDevice : this.getPhysicalDevices()) {
+				VkPhysicalGpuDevice physicalDevice = (VkPhysicalGpuDevice) apiPhysicalDevice;
+
+				if (physicalDevice.getVkProperties().apiVersion() >= VK13.VK_API_VERSION_1_3) {
+					return physicalDevice;
+				}
+			}
+
+			throw new DeviceUnsupportedException("There is no device that supports at least Vulkan 1.3");
+		});
 	}
 
 	@Override

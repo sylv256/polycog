@@ -29,8 +29,7 @@ import gay.sylv.polycog.impl.client.wheel.GameRenderer;
 import gay.sylv.polycog.impl.client.wheel.NativeResource;
 import gay.sylv.polycog.impl.client.wheel.vulkan.core.VkResult;
 
-public final class VkGpuDevice extends NativeResource implements GpuDevice {
-	private final VkDevice vkHandle;
+public final class VkGpuDevice extends NativeResource<VkDevice> implements GpuDevice {
 	private final Collection<GpuQueue> gpuQueues;
 	private @Nullable GpuQueue graphicsQueue;
 
@@ -55,9 +54,9 @@ public final class VkGpuDevice extends NativeResource implements GpuDevice {
 		for (VkGpuQueueFamily queueFamily : queueFamilies) {
 			for (int j = 0; j < queueFamily.createInfo().queueCount(); j++) {
 				PointerBuffer queuesBuffer = stack.mallocPointer(1);
-				VK13.vkGetDeviceQueue(this.vkHandle, queueFamily.index(), j, queuesBuffer);
+				VK13.vkGetDeviceQueue(this.getVkHandle(), queueFamily.index(), j, queuesBuffer);
 				VkGpuQueue queue = new VkGpuQueue(
-						new VkQueue(queuesBuffer.get(), this.vkHandle),
+						new VkQueue(queuesBuffer.get(), this.getVkHandle()),
 						queueFamily
 				);
 				queues.add(queue);
@@ -83,6 +82,6 @@ public final class VkGpuDevice extends NativeResource implements GpuDevice {
 
 	@Override
 	public void onFree() {
-		VK10.vkDestroyDevice(this.vkHandle, null);
+		VK10.vkDestroyDevice(this.getVkHandle(), null);
 	}
 }
