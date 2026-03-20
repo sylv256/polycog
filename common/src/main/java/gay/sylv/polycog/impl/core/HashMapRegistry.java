@@ -22,6 +22,7 @@ public final class HashMapRegistry<T> implements Registry<T> {
 			throw new IllegalStateException("Registry Entry with ID " + id);
 		}
 
-		return this.values.put(id, value);
+		this.values.put(id, value);
+		return value;
 	}
 }
