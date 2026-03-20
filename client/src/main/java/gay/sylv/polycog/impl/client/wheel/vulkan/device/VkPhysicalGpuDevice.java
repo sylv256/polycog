@@ -33,7 +33,7 @@ import org.lwjgl.vulkan.VkQueueFamilyProperties;
 import gay.sylv.polycog.api.client.wheel.device.GpuDevice;
 import gay.sylv.polycog.api.client.wheel.device.GpuFeatures;
 import gay.sylv.polycog.api.client.wheel.device.GpuQueueType;
-import gay.sylv.polycog.api.client.wheel.device.PhysicalGpuDevice;
+import gay.sylv.polycog.api.client.wheel.device.PhysicalDevice;
 import gay.sylv.polycog.impl.client.wheel.GameRenderer;
 import gay.sylv.polycog.impl.client.wheel.NativeResource;
 import gay.sylv.polycog.impl.client.wheel.vulkan.core.DeviceUnsupportedException;
@@ -41,7 +41,7 @@ import gay.sylv.polycog.impl.share.LazyConstant;
 import gay.sylv.polycog.impl.share.LazyConstantList;
 import gay.sylv.polycog.impl.share.LazyConstantMap;
 
-public final class VkPhysicalGpuDevice extends NativeResource<VkPhysicalDevice> implements PhysicalGpuDevice {
+public final class VkPhysicalGpuDevice extends NativeResource<VkPhysicalDevice> implements PhysicalDevice {
 	private final LazyConstant<VkPhysicalDeviceProperties> vkProperties = LazyConstant.of();
 	private final LazyConstantList<VkQueueFamilyProperties> vkQueueFamilyProperties = LazyConstant.ofList();
 	private final LazyConstantMap<Integer, VkGpuQueueFamily> gpuQueueFamilies = LazyConstant.ofMap();
@@ -162,7 +162,7 @@ public final class VkPhysicalGpuDevice extends NativeResource<VkPhysicalDevice> 
 				}
 
 				VkPhysicalDeviceFeatures2 vk2Features = features
-						.<VkGpuFeatures>wheel$internal()
+						.<VkGpuFeatures>wheel$impl()
 						.getFeatures2();
 				VkDeviceCreateInfo createInfo = VkDeviceCreateInfo.calloc(stack)
 						.sType$Default()

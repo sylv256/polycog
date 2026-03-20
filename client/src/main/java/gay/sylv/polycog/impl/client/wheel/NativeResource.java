@@ -22,11 +22,10 @@ import org.jspecify.annotations.Nullable;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.CustomBuffer;
 import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.system.Pointer;
 import org.lwjgl.system.Struct;
 import org.lwjgl.system.StructBuffer;
 
-public abstract class NativeResource<H extends Pointer> implements AutoCloseable {
+public abstract class NativeResource<H> implements AutoCloseable {
 	private final Collection<Buffer> buffers = new ArrayList<>();
 	private final Collection<org.lwjgl.system.NativeResource> resources = new ArrayList<>();
 	private final Collection<CustomBuffer<?>> customBuffers = new ArrayList<>();

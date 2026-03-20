@@ -9,8 +9,11 @@ package gay.sylv.polycog.impl.client.wheel;
 
 import static org.lwjgl.glfw.GLFWVulkan.glfwVulkanSupported;
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.util.vma.Vma.VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 import static org.lwjgl.vulkan.KHRSurface.VK_KHR_SURFACE_EXTENSION_NAME;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRWin32Surface.VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRXcbSurface.VK_KHR_XCB_SURFACE_EXTENSION_NAME;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -25,8 +28,12 @@ import java.util.function.LongFunction;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.Platform;
 import org.lwjgl.system.Struct;
 import org.lwjgl.system.StructBuffer;
+import org.lwjgl.util.vma.Vma;
+import org.lwjgl.util.vma.VmaAllocatorCreateInfo;
+import org.lwjgl.util.vma.VmaVulkanFunctions;
 import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkApplicationInfo;
@@ -38,25 +45,26 @@ import org.slf4j.LoggerFactory;
 import gay.sylv.polycog.api.client.wheel.device.GpuDevice;
 import gay.sylv.polycog.api.client.wheel.device.GpuFeatures;
 import gay.sylv.polycog.api.client.wheel.device.GpuQueue;
-import gay.sylv.polycog.api.client.wheel.device.PhysicalGpuDevice;
+import gay.sylv.polycog.api.client.wheel.device.PhysicalDevice;
 import gay.sylv.polycog.api.core.GameLoop;
 import gay.sylv.polycog.impl.client.core.GameClient;
 import gay.sylv.polycog.impl.client.wheel.vulkan.core.DeviceUnsupportedException;
 import gay.sylv.polycog.impl.client.wheel.vulkan.core.VkResult;
 import gay.sylv.polycog.impl.client.wheel.vulkan.core.VulkanException;
+import gay.sylv.polycog.impl.client.wheel.vulkan.device.VkGpuDevice;
 import gay.sylv.polycog.impl.client.wheel.vulkan.device.VkPhysicalGpuDevice;
+import gay.sylv.polycog.impl.client.wheel.vulkan.window.VkWindow;
 import gay.sylv.polycog.impl.share.Constants;
 import gay.sylv.polycog.impl.share.LazyConstant;
 import gay.sylv.polycog.impl.share.LazyConstantList;
 
-public final class GameRenderer implements GameLoop {
+public final class GameRenderer extends NativeResource<VkInstance> implements GameLoop {
 	public static final Logger LOGGER = LoggerFactory.getLogger("Polycog/Wheel");
-	private @Nullable VkInstance vkInstance;
-	private final LazyConstantList<PhysicalGpuDevice> physicalDevices = LazyConstant.ofList();
+	private final LazyConstantList<PhysicalDevice> physicalDevices = LazyConstant.ofList();
 	private final Collection<String> extensions = new ArrayList<>();
 	private final Collection<String> instanceExtensions = new ArrayList<>();
 	private final LazyConstant<Instant> stop = LazyConstant.of();
-	private final LazyConstant<PhysicalGpuDevice> physicalGpuDevice = LazyConstant.of();
+	private final LazyConstant<PhysicalDevice> physicalGpuDevice = LazyConstant.of();
 
 	public static GameRenderer getInstance() {
 		return GameClient.getInstance().getRenderer();
@@ -65,7 +73,6 @@ public final class GameRenderer implements GameLoop {
 	@Override
 	public Control runLoop() {
 		if (this.stop.get().isBefore(Instant.now())) {
-			GpuDevice.get();
 			return Control.BREAK;
 		}
 
@@ -95,6 +102,12 @@ public final class GameRenderer implements GameLoop {
 			this.instanceExtensions.addAll(List.of(
 					VK_KHR_SURFACE_EXTENSION_NAME
 			));
+
+			this.instanceExtensions.add(switch (Platform.get()) {
+				case LINUX -> VK_KHR_XCB_SURFACE_EXTENSION_NAME;
+				case WINDOWS -> VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
+				default -> throw unsupported();
+			});
 
 			ByteBuffer[] enabledLayersArray =
 					enabledLayers.toArray(ByteBuffer[]::new);
@@ -126,7 +139,7 @@ public final class GameRenderer implements GameLoop {
 					vkInstancePointerBuffer
 			)), "Failed to create VkInstance");
 
-			this.vkInstance = new VkInstance(
+			this.vkHandle = new VkInstance(
 					vkInstancePointerBuffer.get(0),
 					instanceCreateInfo
 			);
@@ -142,12 +155,40 @@ public final class GameRenderer implements GameLoop {
 				LOGGER.debug("Found GpuQueue of type {} for PhysicalDevice {}", queue.type(), device.name());
 			}
 		});
+
+		VkGpuDevice device = GpuDevice.get().wheel$impl();
+		VkPhysicalGpuDevice physicalDevice = PhysicalDevice.get().wheel$impl();
+		VmaVulkanFunctions vmaFunctions = this.allocStruct(VmaVulkanFunctions::calloc)
+				.set(this.getVkInstance(), device.getVkHandle());
+		VmaAllocatorCreateInfo allocatorCreateInfo = this.allocStruct(VmaAllocatorCreateInfo::calloc)
+				.set(
+						VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT,
+						physicalDevice.getVkHandle(),
+						device.getVkHandle(),
+						0,
+						null,
+						null,
+						null,
+						vmaFunctions,
+						this.getVkInstance(),
+						VK13.VK_API_VERSION_1_3,
+						null
+				);
+		PointerBuffer allocatorPointer = this.mallocPointer();
+		assertSuccess(VkResult.fromRaw(Vma.vmaCreateAllocator(allocatorCreateInfo, allocatorPointer)));
+
+		GameClient.getInstance().initializeWindow(physicalDevice);
 	}
 
-	public PhysicalGpuDevice getPhysicalGpuDevice() {
+	public static DeviceUnsupportedException unsupported() {
+		return new DeviceUnsupportedException("WheelVK only supports Linux and Windows");
+		// If you're a graphics programmer, pretend you don't see that ^
+	}
+
+	public PhysicalDevice getPhysicalGpuDevice() {
 		// TODO: configurable selection (automatically chosen first time)
 		return this.physicalGpuDevice.getOrSet(() -> {
-			for (PhysicalGpuDevice apiPhysicalDevice : this.getPhysicalDevices()) {
+			for (PhysicalDevice apiPhysicalDevice : this.getPhysicalDevices()) {
 				VkPhysicalGpuDevice physicalDevice = (VkPhysicalGpuDevice) apiPhysicalDevice;
 
 				if (physicalDevice.getVkProperties().apiVersion() >= VK13.VK_API_VERSION_1_3) {
@@ -160,9 +201,10 @@ public final class GameRenderer implements GameLoop {
 	}
 
 	@Override
-	public void close() {
+	public void onFree() {
 		this.physicalDevices.forEach(v -> ((VkPhysicalGpuDevice) v).close());
-		VK13.vkDestroyInstance(this.getVkInstance(), null);
+		GameClient.getInstance().getWindow().<VkWindow>wheel$impl().close();
+		VK10.vkDestroyInstance(this.getVkInstance(), null);
 	}
 
 	private void assertState() {
@@ -291,12 +333,12 @@ public final class GameRenderer implements GameLoop {
 
 	public VkInstance getVkInstance() {
 		return Objects.requireNonNull(
-			this.vkInstance,
+			this.vkHandle,
 			"Vulkan has not yet been initialized"
 		);
 	}
 
-	public List<PhysicalGpuDevice> getPhysicalDevices() {
+	public List<PhysicalDevice> getPhysicalDevices() {
 		this.assertState();
 		return this.physicalDevices.getOrSet(() -> {
 			try (MemoryStack stack = stackPush()) {

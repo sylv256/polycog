@@ -13,11 +13,11 @@ import gay.sylv.polycog.impl.client.wheel.RenderObject;
 import gay.sylv.polycog.impl.client.wheel.vulkan.device.VkGpuDevice;
 
 /// A logical GPU device. Typically, this has a specific function in a
-/// [PhysicalGpuDevice].
+/// [PhysicalDevice].
 public sealed interface GpuDevice extends AutoCloseable, RenderObject<GpuDevice> permits VkGpuDevice {
 	/// @return the currently selected [GpuDevice].
 	static GpuDevice get() {
-		return PhysicalGpuDevice.get().getLogicalDevice(GpuFeatures.CORE);
+		return PhysicalDevice.get().getLogicalDevice(GpuFeatures.CORE);
 	}
 
 	Collection<GpuQueue> getQueues();

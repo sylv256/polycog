@@ -18,9 +18,12 @@ public interface GameLoop extends Runnable, Closeable {
 	default void initialize() {
 	}
 
-	/// Ran once after execution has concluded.
 	@Override
 	default void close() {
+	}
+
+	/// Ran once after execution has concluded.
+	default void endLoop() {
 	}
 
 	@Override
@@ -37,6 +40,7 @@ public interface GameLoop extends Runnable, Closeable {
 			}
 		}
 
+		this.endLoop();
 		this.close();
 	}
 

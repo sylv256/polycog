@@ -103,7 +103,7 @@ public final class VkGpuFeatures extends NativeResource<VkPhysicalDeviceFeatures
 	public boolean hasFeatures(GpuFeatures requestedFeatures) {
 		final BiFunction<Boolean, Boolean, Boolean> isSupported =
 				(requested, supported) -> !requested || supported;
-		VkGpuFeatures vkFeatures = requestedFeatures.wheel$internal();
+		VkGpuFeatures vkFeatures = requestedFeatures.wheel$impl();
 
 		return VkStructUtil.compareBooleans(
 				VkPhysicalDeviceFeatures.ROBUSTBUFFERACCESS,

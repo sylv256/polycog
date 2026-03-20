@@ -13,8 +13,8 @@ import gay.sylv.polycog.impl.client.wheel.vulkan.device.VkPhysicalGpuDevice;
 
 /// A physical GPU device that contains
 /// [logical GPU devices][GpuDevice].
-public sealed interface PhysicalGpuDevice extends AutoCloseable, RenderObject<PhysicalGpuDevice> permits VkPhysicalGpuDevice {
-	static PhysicalGpuDevice get() {
+public sealed interface PhysicalDevice extends AutoCloseable, RenderObject<PhysicalDevice> permits VkPhysicalGpuDevice {
+	static PhysicalDevice get() {
 		return GameRenderer.getInstance().getPhysicalGpuDevice();
 	}
 

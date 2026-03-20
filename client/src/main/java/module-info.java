@@ -10,6 +10,7 @@ module gay.sylv.polycog.client {
 	requires org.jetbrains.annotations;
 	requires org.apache.logging.log4j.core;
 	requires org.apache.logging.log4j;
+	requires org.lwjgl.vma;
 
 	exports gay.sylv.polycog.api.client.wheel.device;
 	exports gay.sylv.polycog.api.client.wheel.memory;
