@@ -157,8 +157,10 @@ public final class VkPhysicalGpuDevice extends NativeResource<VkPhysicalDevice> 
 	public GpuDevice getLogicalDevice(GpuFeatures features) {
 		return this.gpuDevices.getOrSet(() -> {
 			try (MemoryStack stack = stackPush()) {
-				if (!this.getSupportedFeatures().hasFeatures(features)) {
-					throw new DeviceUnsupportedException("The requested Vulkan features are missing: " + features);
+				GpuFeatures supportedFeatures = this.getSupportedFeatures();
+
+				if (!supportedFeatures.hasFeatures(features)) {
+					throw new DeviceUnsupportedException("The requested Vulkan features are missing (" + features + ") whereas only these features are supported: " + supportedFeatures);
 				}
 
 				VkPhysicalDeviceFeatures2 vk2Features = features

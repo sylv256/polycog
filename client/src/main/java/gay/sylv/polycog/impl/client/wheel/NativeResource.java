@@ -10,6 +10,7 @@ package gay.sylv.polycog.impl.client.wheel;
 import java.nio.Buffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -72,6 +73,13 @@ public abstract class NativeResource<H> implements AutoCloseable {
 		FloatBuffer buffer = MemoryUtil.memAllocFloat(values.length);
 		buffer.put(0, values);
 		logAllocCount(values.length, buffer);
+		this.buffers.add(buffer);
+		return buffer;
+	}
+
+	protected LongBuffer mallocLongs(int size) {
+		LongBuffer buffer = MemoryUtil.memAllocLong(size);
+		logAllocCount(size, buffer);
 		this.buffers.add(buffer);
 		return buffer;
 	}

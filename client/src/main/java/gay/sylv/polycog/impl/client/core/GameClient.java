@@ -7,22 +7,17 @@
 
 package gay.sylv.polycog.impl.client.core;
 
-import static org.lwjgl.glfw.GLFW.GLFW_PLATFORM;
-import static org.lwjgl.glfw.GLFW.GLFW_PLATFORM_WIN32;
-import static org.lwjgl.glfw.GLFW.GLFW_PLATFORM_X11;
-import static org.lwjgl.glfw.GLFW.GLFW_TRUE;
-import static org.lwjgl.glfw.GLFW.GLFW_X11_XCB_VULKAN_SURFACE;
-import static org.lwjgl.glfw.GLFW.glfwInit;
-import static org.lwjgl.glfw.GLFW.glfwInitHint;
-import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
+import static org.lwjgl.sdl.SDLError.SDL_GetError;
+import static org.lwjgl.sdl.SDLHints.SDL_HINT_RENDER_DRIVER;
+import static org.lwjgl.sdl.SDLHints.SDL_HINT_VIDEO_DRIVER;
+import static org.lwjgl.sdl.SDLHints.SDL_SetHint;
+import static org.lwjgl.sdl.SDLInit.SDL_INIT_AUDIO;
+import static org.lwjgl.sdl.SDLInit.SDL_INIT_VIDEO;
+import static org.lwjgl.sdl.SDLInit.SDL_Init;
 
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
-import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.system.Configuration;
 import org.lwjgl.system.Platform;
 import org.slf4j.Logger;
@@ -32,7 +27,6 @@ import gay.sylv.polycog.api.client.wheel.device.PhysicalDevice;
 import gay.sylv.polycog.api.client.wheel.window.Window;
 import gay.sylv.polycog.api.core.GameLoop;
 import gay.sylv.polycog.impl.client.wheel.GameRenderer;
-import gay.sylv.polycog.impl.client.wheel.vulkan.window.VkWindow;
 import gay.sylv.polycog.impl.share.Constants;
 
 public final class GameClient implements GameLoop {
@@ -87,35 +81,17 @@ public final class GameClient implements GameLoop {
 
 	@Override
 	public void initialize() {
-		GLFWErrorCallback.createPrint(new PrintStream(new OutputStream() {
-			@Override
-			public void write(
-					byte[] b,
-					int off,
-					int len
-			) {
-				GameClient.this.logger.error(new String(b, off, len, StandardCharsets.UTF_8));
-			}
-
-			@Override
-			public void write(int b) {
-				GameClient.this.logger.atError()
-						.setMessage(Character.toString(b))
-						.log();
-			}
-		})).set();
+		SDL_SetHint(SDL_HINT_RENDER_DRIVER, "vulkan");
 
 		switch (Platform.get()) {
-			case LINUX -> {
-				glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
-				glfwInitHint(GLFW_X11_XCB_VULKAN_SURFACE, GLFW_TRUE);
+			case LINUX -> SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "x11");
+			case WINDOWS -> {
 			}
-			case WINDOWS -> glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WIN32);
 			default -> throw GameRenderer.unsupported();
 		}
 
-		if (!glfwInit()) {
-			throw new IllegalStateException("Failed to initialize GLFW");
+		if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO)) {
+			throw handleErrorSDL("Failed to initialize SDL");
 		}
 
 		GameClient.getRenderThread().start();
@@ -128,16 +104,46 @@ public final class GameClient implements GameLoop {
 				720,
 				Constants.NAME
 		);
-		glfwSetKeyCallback(
-				this.window.<VkWindow>wheel$impl().getVkHandle(),
-				this::parseInput
-		);
 	}
 
 	public GameRenderer getRenderer() {
 		return this.renderer;
 	}
 
-	public void parseInput(long window, int key, int scancode, int action, int mods) {
+	public static SDLException handleErrorSDL(String message) {
+		String error = SDL_GetError();
+
+		if (error != null) {
+			GameRenderer.LOGGER.error(message);
+			return new SDLException(error);
+		} else {
+			return new SDLException(message);
+		}
+	}
+
+	public static <X extends Exception> X handleErrorSDL(X exception) {
+		String error = SDL_GetError();
+
+		if (error != null) {
+			GameRenderer.LOGGER.error("Multiple platform-specific errors have occurred", new SDLException(error));
+		}
+
+		return exception;
+	}
+
+	public static <T> T handleErrorSDL(T number) {
+		if (number == null) {
+			throw new SDLException(Objects.requireNonNull(SDL_GetError(), "No SDL error was found, but passed object was null; aborting"));
+		}
+
+		return number;
+	}
+
+	public static long handleErrorSDL(long number) {
+		if (number == 0) {
+			throw new SDLException(Objects.requireNonNull(SDL_GetError(), "No SDL error was found, but passed object was null; aborting"));
+		}
+
+		return number;
 	}
 }

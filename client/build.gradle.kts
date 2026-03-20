@@ -69,7 +69,7 @@ dependencies {
 
 	implementationIncludeNatives(Libraries.LWJGL)
 	implementationIncludeNatives(Libraries.LWJGL_JEMALLOC)
-	implementationIncludeNatives(Libraries.LWJGL_GLFW)
+	implementationIncludeNatives(Libraries.LWJGL_SDL)
 	implementationIncludeNatives(Libraries.LWJGL_STB)
 	implementationIncludeNatives(Libraries.LWJGL_VULKAN)
 	implementationIncludeNatives(Libraries.LWJGL_VMA)

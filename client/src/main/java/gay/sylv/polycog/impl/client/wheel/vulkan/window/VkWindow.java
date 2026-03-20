@@ -1,10 +1,9 @@
 package gay.sylv.polycog.impl.client.wheel.vulkan.window;
 
-import static org.lwjgl.glfw.GLFW.GLFW_CLIENT_API;
-import static org.lwjgl.glfw.GLFW.GLFW_NO_API;
-import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
-import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
-import static org.lwjgl.glfw.GLFW.glfwWindowHint;
+import static gay.sylv.polycog.impl.client.core.GameClient.handleErrorSDL;
+import static org.lwjgl.sdl.SDLVideo.SDL_CreateWindow;
+import static org.lwjgl.sdl.SDLVideo.SDL_DestroyWindow;
+import static org.lwjgl.sdl.SDLVideo.SDL_WINDOW_VULKAN;
 
 import gay.sylv.polycog.api.client.wheel.window.Surface;
 import gay.sylv.polycog.api.client.wheel.window.Window;
@@ -21,17 +20,15 @@ public final class VkWindow extends NativeResource<Long> implements Window {
 			int height,
 			String name
 	) {
-		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		this.vkHandle = glfwCreateWindow(
+		this.vkHandle = SDL_CreateWindow(
+				name,
 				width,
 				height,
-				name,
-				0,
-				0
+				SDL_WINDOW_VULKAN
 		);
 
 		if (this.vkHandle == 0) {
-			throw new IllegalStateException("Failed to initialize window");
+			throw handleErrorSDL("Failed to initialize window");
 		}
 
 		this.physicalDevice = physicalDevice;
@@ -49,6 +46,6 @@ public final class VkWindow extends NativeResource<Long> implements Window {
 
 	@Override
 	protected void onFree() {
-		glfwDestroyWindow(this.getVkHandle());
+		SDL_DestroyWindow(this.getVkHandle());
 	}
 }

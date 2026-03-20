@@ -7,21 +7,24 @@
 
 package gay.sylv.polycog.impl.client.wheel;
 
-import static org.lwjgl.glfw.GLFWVulkan.glfwVulkanSupported;
+import static gay.sylv.polycog.impl.client.core.GameClient.handleErrorSDL;
+import static org.lwjgl.sdl.SDLVulkan.SDL_Vulkan_GetInstanceExtensions;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.util.vma.Vma.VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 import static org.lwjgl.vulkan.KHRSurface.VK_KHR_SURFACE_EXTENSION_NAME;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 import static org.lwjgl.vulkan.KHRWin32Surface.VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
-import static org.lwjgl.vulkan.KHRXcbSurface.VK_KHR_XCB_SURFACE_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRXlibSurface.VK_KHR_XLIB_SURFACE_EXTENSION_NAME;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.LongFunction;
 
@@ -85,8 +88,16 @@ public final class GameRenderer extends NativeResource<VkInstance> implements Ga
 
 		this.stop.set(Instant.now().plusSeconds(5));
 
-		if (!glfwVulkanSupported()) {
-			throw new DeviceUnsupportedException();
+		PointerBuffer supportedInstanceExtensionsBuffer = SDL_Vulkan_GetInstanceExtensions();
+
+		if (supportedInstanceExtensionsBuffer == null) {
+			throw handleErrorSDL(new DeviceUnsupportedException());
+		}
+
+		Set<String> supportedInstanceExtensions = new HashSet<>();
+
+		for (int i = 0; i < supportedInstanceExtensionsBuffer.limit(); i++) {
+			supportedInstanceExtensions.add(supportedInstanceExtensionsBuffer.getStringASCII(i));
 		}
 
 		try (MemoryStack stack = stackPush()) {
@@ -104,7 +115,7 @@ public final class GameRenderer extends NativeResource<VkInstance> implements Ga
 			));
 
 			this.instanceExtensions.add(switch (Platform.get()) {
-				case LINUX -> VK_KHR_XCB_SURFACE_EXTENSION_NAME;
+				case LINUX -> VK_KHR_XLIB_SURFACE_EXTENSION_NAME;
 				case WINDOWS -> VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
 				default -> throw unsupported();
 			});
@@ -131,6 +142,18 @@ public final class GameRenderer extends NativeResource<VkInstance> implements Ga
 					));
 
 			PointerBuffer vkInstancePointerBuffer = stack.mallocPointer(1);
+
+			List<String> unsupportedInstanceExtensions = new ArrayList<>();
+
+			for (String extension : this.instanceExtensions) {
+				if (!supportedInstanceExtensions.contains(extension)) {
+					unsupportedInstanceExtensions.add(extension);
+				}
+			}
+
+			if (!unsupportedInstanceExtensions.isEmpty()) {
+				throw new DeviceUnsupportedException("The required Vulkan instance extensions are missing: " + unsupportedInstanceExtensions);
+			}
 
 			assertSuccess(
 					VkResult.fromRaw(VK10.vkCreateInstance(

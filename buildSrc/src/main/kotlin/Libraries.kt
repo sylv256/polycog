@@ -32,7 +32,7 @@ object Libraries {
 
 	// Client
 	const val LWJGL = "org.lwjgl:lwjgl:$LWJGL_VER"
-	const val LWJGL_GLFW = "org.lwjgl:lwjgl-glfw:$LWJGL_VER"
+	const val LWJGL_SDL = "org.lwjgl:lwjgl-sdl:$LWJGL_VER"
 	const val LWJGL_JEMALLOC = "org.lwjgl:lwjgl-jemalloc:$LWJGL_VER"
 	const val LWJGL_STB = "org.lwjgl:lwjgl-stb:$LWJGL_VER"
 	const val LWJGL_VULKAN = "org.lwjgl:lwjgl-vulkan:$LWJGL_VER"
