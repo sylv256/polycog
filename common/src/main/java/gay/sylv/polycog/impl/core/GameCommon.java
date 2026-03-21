@@ -7,12 +7,15 @@
 
 package gay.sylv.polycog.impl.core;
 
+import java.util.Objects;
+
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class GameCommon {
 	public final Logger logger;
-	private static GameCommon INSTANCE;
+	private static @Nullable GameCommon INSTANCE;
 
 	private GameCommon() {
 		this.logger = LoggerFactory.getLogger("Polycog");
@@ -28,6 +31,6 @@ public final class GameCommon {
 	}
 
 	public static GameCommon getInstance() {
-		return INSTANCE;
+		return Objects.requireNonNull(INSTANCE);
 	}
 }

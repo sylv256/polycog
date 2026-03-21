@@ -18,7 +18,6 @@ import static org.lwjgl.vulkan.KHRXlibSurface.VK_KHR_XLIB_SURFACE_EXTENSION_NAME
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -56,7 +55,6 @@ import gay.sylv.polycog.impl.client.wheel.vulkan.core.VkResult;
 import gay.sylv.polycog.impl.client.wheel.vulkan.core.VulkanException;
 import gay.sylv.polycog.impl.client.wheel.vulkan.device.VkGpuDevice;
 import gay.sylv.polycog.impl.client.wheel.vulkan.device.VkPhysicalGpuDevice;
-import gay.sylv.polycog.impl.client.wheel.vulkan.window.VkWindow;
 import gay.sylv.polycog.impl.share.Constants;
 import gay.sylv.polycog.impl.share.LazyConstant;
 import gay.sylv.polycog.impl.share.LazyConstantList;
@@ -66,7 +64,6 @@ public final class GameRenderer extends NativeResource<VkInstance> implements Ga
 	private final LazyConstantList<PhysicalDevice> physicalDevices = LazyConstant.ofList();
 	private final Collection<String> extensions = new ArrayList<>();
 	private final Collection<String> instanceExtensions = new ArrayList<>();
-	private final LazyConstant<Instant> stop = LazyConstant.of();
 	private final LazyConstant<PhysicalDevice> physicalGpuDevice = LazyConstant.of();
 
 	public static GameRenderer getInstance() {
@@ -75,7 +72,7 @@ public final class GameRenderer extends NativeResource<VkInstance> implements Ga
 
 	@Override
 	public Control runLoop() {
-		if (this.stop.get().isBefore(Instant.now())) {
+		if (GameClient.getInstance().isQuitting()) {
 			return Control.BREAK;
 		}
 
@@ -85,8 +82,6 @@ public final class GameRenderer extends NativeResource<VkInstance> implements Ga
 	@Override
 	public void initialize() {
 		LOGGER.info("Initializing Wheel/Vulkan");
-
-		this.stop.set(Instant.now().plusSeconds(5));
 
 		PointerBuffer supportedInstanceExtensionsBuffer = SDL_Vulkan_GetInstanceExtensions();
 
@@ -198,9 +193,9 @@ public final class GameRenderer extends NativeResource<VkInstance> implements Ga
 						null
 				);
 		PointerBuffer allocatorPointer = this.mallocPointer();
-		assertSuccess(VkResult.fromRaw(Vma.vmaCreateAllocator(allocatorCreateInfo, allocatorPointer)));
+		assertSuccess(Vma.vmaCreateAllocator(allocatorCreateInfo, allocatorPointer));
 
-		GameClient.getInstance().initializeWindow(physicalDevice);
+		GameClient.getInstance().initializeWindow(device);
 	}
 
 	public static DeviceUnsupportedException unsupported() {
@@ -226,7 +221,6 @@ public final class GameRenderer extends NativeResource<VkInstance> implements Ga
 	@Override
 	public void onFree() {
 		this.physicalDevices.forEach(v -> ((VkPhysicalGpuDevice) v).close());
-		GameClient.getInstance().getWindow().<VkWindow>wheel$impl().close();
 		VK10.vkDestroyInstance(this.getVkInstance(), null);
 	}
 
@@ -341,6 +335,14 @@ public final class GameRenderer extends NativeResource<VkInstance> implements Ga
 
 	public static void assertSuccess(VkResult result, String message) {
 		assertResult(result, message, VkResult.SUCCESS);
+	}
+
+	public static void assertSuccess(int result) {
+		assertSuccess(VkResult.fromRaw(result));
+	}
+
+	public static void assertSuccess(int result, String message) {
+		assertSuccess(VkResult.fromRaw(result), message);
 	}
 
 	private VkResult vkEnumeratePhysicalDevices(

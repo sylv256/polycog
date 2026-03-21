@@ -13,8 +13,10 @@ import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
@@ -34,8 +36,14 @@ public abstract class NativeResource<H> implements AutoCloseable {
 	private final Collection<NativeResource<?>> children = new HashSet<>();
 	@Nullable NativeResource<?> parent;
 	protected @Nullable H vkHandle;
+	private int memberSize;
+	private Map<Integer, LongBuffer> memberPointers = new HashMap<>();
 
 	protected NativeResource() {
+	}
+
+	protected int getMemberIndex() {
+		return this.memberSize++;
 	}
 
 	protected PointerBuffer mallocPointers(int count) {
@@ -84,7 +92,7 @@ public abstract class NativeResource<H> implements AutoCloseable {
 		return buffer;
 	}
 
-	protected <T extends NativeResource<?>> T addChild(T child) {
+	public <T extends NativeResource<?>> T addChild(T child) {
 		child.parent = this;
 		this.children.add(child);
 		return child;
@@ -110,6 +118,18 @@ public abstract class NativeResource<H> implements AutoCloseable {
 
 	public H getVkHandle() {
 		return Objects.requireNonNull(this.vkHandle, "This resource does not have a Vulkan handle");
+	}
+
+	public long getVkHandle(int memberIndex) {
+		return ((LongBuffer) this.getVkHandle()).get(memberIndex);
+	}
+
+	public LongBuffer getVkHandleRef(int memberIndex) {
+		if (!this.memberPointers.containsKey(memberIndex)) {
+			this.memberPointers.put(memberIndex, ((LongBuffer) this.getVkHandle()).slice(memberIndex, 1));
+		}
+
+		return this.memberPointers.get(memberIndex);
 	}
 
 	/// Called before automatic resources are freed.

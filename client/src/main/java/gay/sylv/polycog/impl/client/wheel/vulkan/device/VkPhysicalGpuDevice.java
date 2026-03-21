@@ -184,7 +184,7 @@ public final class VkPhysicalGpuDevice extends NativeResource<VkPhysicalDevice> 
 						));
 				return List.of(this.addChildren(new VkGpuDevice(
 						stack,
-						this.getVkHandle(),
+						this,
 						createInfo,
 						this.getQueueFamilies().values()
 				)));

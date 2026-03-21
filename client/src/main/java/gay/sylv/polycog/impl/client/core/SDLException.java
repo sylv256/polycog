@@ -4,4 +4,8 @@ public class SDLException extends RuntimeException {
 	public SDLException(String message) {
 		super(message);
 	}
+
+	public SDLException(Throwable throwable) {
+		super(throwable);
+	}
 }

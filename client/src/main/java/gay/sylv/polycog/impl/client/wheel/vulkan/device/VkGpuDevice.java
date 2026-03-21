@@ -16,7 +16,6 @@ import org.jspecify.annotations.Nullable;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK10;
-import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkDeviceCreateInfo;
 import org.lwjgl.vulkan.VkPhysicalDevice;
@@ -27,25 +26,27 @@ import gay.sylv.polycog.api.client.wheel.device.GpuQueue;
 import gay.sylv.polycog.api.client.wheel.device.GpuQueueType;
 import gay.sylv.polycog.impl.client.wheel.GameRenderer;
 import gay.sylv.polycog.impl.client.wheel.NativeResource;
-import gay.sylv.polycog.impl.client.wheel.vulkan.core.VkResult;
 
 public final class VkGpuDevice extends NativeResource<VkDevice> implements GpuDevice {
 	private final Collection<GpuQueue> gpuQueues;
 	private @Nullable GpuQueue graphicsQueue;
+	private final VkPhysicalGpuDevice physicalDevice;
 
 	public VkGpuDevice(
 			MemoryStack stack,
-			VkPhysicalDevice vkPhysicalDevice,
+			VkPhysicalGpuDevice physicalDevice,
 			VkDeviceCreateInfo createInfo,
 			Collection<VkGpuQueueFamily> queueFamilies
 	) {
+		this.physicalDevice = physicalDevice;
+		VkPhysicalDevice vkPhysicalDevice = physicalDevice.getVkHandle();
 		PointerBuffer deviceBuffer = this.mallocPointer();
-		GameRenderer.assertSuccess(VkResult.fromRaw(VK13.vkCreateDevice(
+		GameRenderer.assertSuccess(VK10.vkCreateDevice(
 				vkPhysicalDevice,
 				createInfo,
 				null,
 				deviceBuffer
-		)), "Failed to create VkDevice");
+		), "Failed to create VkDevice");
 		this.vkHandle = new VkDevice(deviceBuffer.get(0), vkPhysicalDevice, createInfo);
 
 		// Assume most Queue Families have around 2 queues.
@@ -54,7 +55,7 @@ public final class VkGpuDevice extends NativeResource<VkDevice> implements GpuDe
 		for (VkGpuQueueFamily queueFamily : queueFamilies) {
 			for (int j = 0; j < queueFamily.createInfo().queueCount(); j++) {
 				PointerBuffer queuesBuffer = stack.mallocPointer(1);
-				VK13.vkGetDeviceQueue(this.getVkHandle(), queueFamily.index(), j, queuesBuffer);
+				VK10.vkGetDeviceQueue(this.getVkHandle(), queueFamily.index(), j, queuesBuffer);
 				VkGpuQueue queue = new VkGpuQueue(
 						new VkQueue(queuesBuffer.get(), this.getVkHandle()),
 						queueFamily
@@ -83,5 +84,9 @@ public final class VkGpuDevice extends NativeResource<VkDevice> implements GpuDe
 	@Override
 	public void onFree() {
 		VK10.vkDestroyDevice(this.getVkHandle(), null);
+	}
+
+	public VkPhysicalGpuDevice getPhysicalDevice() {
+		return physicalDevice;
 	}
 }
