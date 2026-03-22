@@ -308,6 +308,10 @@ public final class GameRenderer extends NativeResource<VkInstance> implements Ga
 			VkResult... results
 	) {
 		for (VkResult other : results) {
+			if (other.equals(VkResult.SUCCESS) && result.raw() > 0) {
+				LOGGER.warn("A non-zero VkResult was returned: ", new VulkanException(result, message));
+			}
+
 			if (result.equals(other)) {
 				return;
 			}
