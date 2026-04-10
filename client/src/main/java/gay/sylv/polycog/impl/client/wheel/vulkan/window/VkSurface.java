@@ -33,7 +33,7 @@ public final class VkSurface extends NativeResource<LongBuffer> implements Surfa
 				window.getVkHandle(),
 				GameRenderer.getInstance().getVkInstance(),
 				null,
-				this.vkHandle
+				this.getVkHandleRef(this.vkSurface)
 		)) {
 			throw handleErrorSDL(new DeviceUnsupportedException("Vulkan surfaces are unsupported"));
 		}
