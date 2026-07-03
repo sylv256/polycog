@@ -8,8 +8,10 @@ import static org.lwjgl.sdl.SDLVideo.SDL_SetWindowResizable;
 import static org.lwjgl.sdl.SDLVideo.SDL_WINDOW_RESIZABLE;
 import static org.lwjgl.sdl.SDLVideo.SDL_WINDOW_VULKAN;
 
-import gay.sylv.polycog.api.client.wheel.window.Surface;
-import gay.sylv.polycog.api.client.wheel.window.Window;
+import gay.sylv.polycog.api.client.wheel.image.ImageFormat;
+import gay.sylv.polycog.api.client.wheel.surface.PresentMode;
+import gay.sylv.polycog.api.client.wheel.surface.Surface;
+import gay.sylv.polycog.api.client.wheel.surface.Window;
 import gay.sylv.polycog.impl.client.wheel.NativeResource;
 import gay.sylv.polycog.impl.client.wheel.vulkan.device.VkGpuDevice;
 import gay.sylv.polycog.impl.client.wheel.vulkan.device.VkPhysicalGpuDevice;
@@ -37,7 +39,7 @@ public final class VkWindow extends NativeResource<Long> implements Window {
 		this.height = height;
 
 		this.device = device;
-		this.surface = this.addChild(new VkSurface(this));
+		this.surface = this.addChild(new VkSurface(this, ImageFormat.BGRA32_SRGB, PresentMode.Preference.LOW_LATENCY));
 		device.addChild(this);
 	}
 

@@ -1,4 +1,4 @@
-package gay.sylv.polycog.api.client.wheel.window;
+package gay.sylv.polycog.api.client.wheel.surface;
 
 import gay.sylv.polycog.api.client.wheel.device.GpuDevice;
 import gay.sylv.polycog.impl.client.wheel.RenderObject;

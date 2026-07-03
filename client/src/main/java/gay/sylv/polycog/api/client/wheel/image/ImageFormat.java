@@ -1,27 +1,20 @@
 package gay.sylv.polycog.api.client.wheel.image;
 
-import org.jetbrains.annotations.ApiStatus;
-import org.lwjgl.vulkan.KHRSurface;
-import org.lwjgl.vulkan.VK10;
-
+/// The pixel format that a [GpuImage] uses.
 public enum ImageFormat {
-	BGRA32_SRGB(VK10.VK_FORMAT_B8G8R8A8_SRGB, KHRSurface.VK_COLORSPACE_SRGB_NONLINEAR_KHR);
+	/// 32-bit SRGB with 8 bits per component.
+	///
+	/// `0xBBGGRRAA`
+	BGRA32_SRGB(false);
 
-	private final int vkFormat;
-	private final int vkColorSpace;
+	private final boolean hdr;
 
-	ImageFormat(int vkFormat, int vkColorSpace) {
-		this.vkFormat = vkFormat;
-		this.vkColorSpace = vkColorSpace;
+	ImageFormat(boolean hdr) {
+		this.hdr = hdr;
 	}
 
-	@ApiStatus.Internal
-	public int getVkFormat() {
-		return vkFormat;
-	}
-
-	@ApiStatus.Internal
-	public int getVkColorSpace() {
-		return vkColorSpace;
+	/// Whether this format supports HDR.
+	public boolean isHdr() {
+		return this.hdr;
 	}
 }

@@ -13,9 +13,11 @@ import org.lwjgl.vulkan.VkSurfaceCapabilitiesKHR;
 import org.lwjgl.vulkan.VkSwapchainCreateInfoKHR;
 
 import gay.sylv.polycog.api.client.wheel.image.ImageFormat;
-import gay.sylv.polycog.api.client.wheel.window.Surface;
+import gay.sylv.polycog.api.client.wheel.surface.PresentMode;
+import gay.sylv.polycog.api.client.wheel.surface.Surface;
 import gay.sylv.polycog.impl.client.wheel.GameRenderer;
 import gay.sylv.polycog.impl.client.wheel.NativeResource;
+import gay.sylv.polycog.impl.client.wheel.vulkan.VkConstants;
 import gay.sylv.polycog.impl.client.wheel.vulkan.core.DeviceUnsupportedException;
 
 public final class VkSurface extends NativeResource<LongBuffer> implements Surface {
@@ -24,9 +26,21 @@ public final class VkSurface extends NativeResource<LongBuffer> implements Surfa
 	private final VkSurfaceCapabilitiesKHR surfaceCapabilities =
 			this.allocStruct(VkSurfaceCapabilitiesKHR::calloc);
 	private final VkWindow window;
+	private final ImageFormat format;
+	private final PresentMode presentMode;
 
-	public VkSurface(VkWindow window) {
+	public VkSurface(
+			VkWindow window,
+			ImageFormat format,
+			PresentMode.Preference preference
+	) {
 		this.window = window;
+		this.format = format;
+		this.presentMode = switch (preference) {
+			case NO_SYNC -> PresentMode.IMMEDIATE;
+			case FIFO -> PresentMode.FIFO;
+			case LOW_LATENCY -> PresentMode.MAILBOX;
+		};
 		this.vkHandle = this.mallocLongs(2);
 
 		if (!SDL_Vulkan_CreateSurface(
@@ -59,14 +73,14 @@ public final class VkSurface extends NativeResource<LongBuffer> implements Surfa
 				.sType$Default()
 				.surface(this.getVkHandle(this.vkSurface))
 				.minImageCount(this.surfaceCapabilities.minImageCount())
-				.imageFormat(this.getFormat().getVkFormat())
-				.imageColorSpace(this.getFormat().getVkColorSpace())
+				.imageFormat(VkConstants.format(this.getFormat()))
+				.imageColorSpace(VkConstants.colorSpace(this.getFormat()))
 				.imageExtent(swapchainExtent)
 				.imageArrayLayers(1)
 				.imageUsage(VK10.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
 				.preTransform(KHRSurface.VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
 				.compositeAlpha(KHRSurface.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
-				.presentMode(KHRSurface.VK_PRESENT_MODE_MAILBOX_KHR)) {
+				.presentMode(VkConstants.presentMode(this.getPresentMode()))) {
 			GameRenderer.assertSuccess(KHRSwapchain.vkCreateSwapchainKHR(
 					window.getDevice().getVkHandle(),
 					swapchainCI,
@@ -94,6 +108,11 @@ public final class VkSurface extends NativeResource<LongBuffer> implements Surfa
 
 	@Override
 	public ImageFormat getFormat() {
-		return ImageFormat.BGRA32_SRGB;
+		return this.format;
+	}
+
+	@Override
+	public PresentMode getPresentMode() {
+		return this.presentMode;
 	}
 }

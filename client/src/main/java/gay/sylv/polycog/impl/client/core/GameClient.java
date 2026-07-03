@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import gay.sylv.polycog.api.client.wheel.device.GpuDevice;
-import gay.sylv.polycog.api.client.wheel.window.Window;
+import gay.sylv.polycog.api.client.wheel.surface.Window;
 import gay.sylv.polycog.api.core.GameLoop;
 import gay.sylv.polycog.impl.client.wheel.GameRenderer;
 import gay.sylv.polycog.impl.share.Constants;
